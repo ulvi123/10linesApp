@@ -1,6 +1,7 @@
 // src/app/dashboard/components/RobotManagement.tsx
-import React from 'react'
+import React ,{useState} from 'react'
 import { Robot } from '../hooks/useRobots'
+import AddRobotForm from './AddRobotForm'
 
 interface RobotManagementProps {
   robots: Robot[] | undefined
@@ -10,6 +11,7 @@ interface RobotManagementProps {
 }
 
 const RobotManagement: React.FC<RobotManagementProps> = ({ robots, loading, error, refetch }) => {
+  const [isModalOpen,setIsModalOpen] = useState(false)
   if (loading) return <div className="bg-white shadow rounded-lg p-6">Loading robots...</div>
   if (error) return <div className="bg-white shadow rounded-lg p-6 text-red-500">Error: {error}</div>
 
@@ -28,7 +30,11 @@ const RobotManagement: React.FC<RobotManagementProps> = ({ robots, loading, erro
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-2xl font-semibold mb-4">Robot Management</h2>
+      <div className="flex items-center mb-4">
+        <h2 className="text-2xl font-semibold">Robot Management</h2>
+        <button className="ml-auto bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onClick={()=>setIsModalOpen(true)} >Add Robot</button>
+      </div>
+
       {robots && robots.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {robots.map((robot) => (
@@ -45,18 +51,18 @@ const RobotManagement: React.FC<RobotManagementProps> = ({ robots, loading, erro
               <p className="mb-2">
                 Position: ({robot.current_coordinates.x}, {robot.current_coordinates.y})
               </p>
-              <button 
-                className="mt-auto bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                onClick={() => {/* Send command to robot logic */}}
-              >
-                Send Command
-              </button>
+              
             </div>
           ))}
         </div>
       ) : (
         <p>No robots available.</p>
       )}
+      <AddRobotForm
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onRobotAdded={refetch}
+      />
     </div>
   )
 }

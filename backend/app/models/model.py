@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Float, Boolean, Date, Enum, JSON
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID,ENUM
 import uuid
 from app.database.database import Base
 from enum import Enum as PyEnum
@@ -31,10 +31,10 @@ class UserResponse(BaseModel):
 
 
 class TaskStatus(str, PyEnum):
+    PENDING = "pending"  # lowercase value
     IDLE = "idle"
-    IN_OPERATION = "IN_OPERATION"
+    IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
-    FAILED = "failed"
 
 class RobotStatus(str, PyEnum):
     PENDING = "pending"
@@ -81,7 +81,10 @@ class Task(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String)
-    status = Column(Enum(TaskStatus))
+    status = Column(
+        ENUM(TaskStatus, name='taskstatus', create_type=False, values_callable=lambda obj: [e.value for e in obj]), 
+        default=TaskStatus.PENDING.value  # Use .value to get the string
+    )
     location = Column(String)
     area_dimensions = Column(JSON)
     quality_requirements = Column(JSON)

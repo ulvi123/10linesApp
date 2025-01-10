@@ -1,7 +1,7 @@
 // src/app/dashboard/components/ControlPanel.tsx
 import React, { useState } from 'react'
 import { Robot } from '../hooks/useRobots'
-import { supabase } from '../lib/supabase'
+import axios from 'axios'
 
 interface ControlPanelProps {
   robots: Robot[] | undefined
@@ -14,26 +14,34 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ robots, refetchRobots }) =>
   const [parameters, setParameters] = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
 
+
+
+
   const handleSendCommand = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedRobot) return
-
     setStatus('sending')
+
+    const commandLower = command.toLowerCase()
+    const validCommands = ['start', 'stop', 'park', 'charge', 'move', 'calibrate']
+
+    if (!validCommands.includes(commandLower)) {
+      console.error('Invalid command:', command)
+      setStatus('error')
+      return
+    }
+
+
     try {
-      const { data, error } = await supabase
-        .from('robot_commands')
-        .insert({
-          robot_id: selectedRobot.id,
-          command,
-          parameters: parameters ? JSON.parse(parameters) : {},
-        })
-
-      if (error) throw error
-
+      const response = await axios.post(`http://localhost:8000/robots/${selectedRobot.id}/control`, {
+        priority: 1,
+        command: commandLower,
+      })
+      if (!response.data) throw new Error(" The response data is not returned for some reason")
       setStatus('success')
       setCommand('')
       setParameters('')
-      refetchRobots() // Refresh the robot list to show updated status
+      refetchRobots() // the purpose here is to Refresh the robot list to show updated status
     } catch (error) {
       console.error('Error sending command:', error)
       setStatus('error')

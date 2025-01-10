@@ -47,11 +47,19 @@ def login(user:UserLogin,db:Session=Depends(get_db)):
 #tasks relates routes
 @router.post("/tasks", response_model=TaskResponse)
 async def add_task(task: TaskCreate, db: Session = Depends(get_db)):
-    db_task = Task(**task.dict())
-    db.add(db_task)
-    db.commit()
-    db.refresh(db_task)
-    return db_task
+    try:
+        task_data = task.dict()
+        if 'status' in task_data:
+            task_data['status'] = task_data['status'].value if isinstance(task_data['status'], TaskStatus) else task_data['status'].lower()
+                
+        db_task = Task(**task.dict())
+        db.add(db_task)
+        db.commit()
+        db.refresh(db_task)
+        return db_task
+    except Exception as e:
+        print(f"Error creating task: {str(e)}")
+        raise HTTPException(status_code=422, detail=f"Error creating task: {str(e)}")
 
 @router.get("/tasks/{task_id}", response_model=TaskResponse)
 async def get_single_task(task_id: UUID, db: Session = Depends(get_db)):
@@ -101,17 +109,9 @@ async def send_control_command(
     robot = db.query(Robot).filter(Robot.id == robot_id).first()
     if not robot:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Robot not found")
-
-    # Validate the robot status and command (implement your logic in `validate_robot_status`).
     validate_robot_status(robot, command)
-
-    # Process the control command (implement your logic in `process_command_control`).
     result = process_command_control(robot, command)
-
-    # Commit any changes made during command processing.
     db.commit()
-
-    # Return a response summarizing the result.
     return {
         "status": "success",
         "robot_id": str(robot_id),

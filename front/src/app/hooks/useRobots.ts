@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import axios from "axios";
 
 export interface Robot {
   id: number;
@@ -24,18 +25,18 @@ export function useRobots() {
   async function fetchRobots() {
     try {
       setLoading(true);
-      const { data, error } = await supabase.from("robots").select("*");
-      if (error) throw error;
-      setRobots(data || []);
+      const response = await axios.get<Robot[]>("http://localhost:8000/robots");
+      setRobots(response.data);
     } catch (error) {
       if (error instanceof Error) {
-        setError(error);
+        console.error(error);
+      } else {
+        console.error("Error fetching robots:", error);
       }
-      console.error("Could not fetch the robots");
     } finally {
       setLoading(false);
     }
   }
 
-  return {robots,loading,error,refetch:fetchRobots}
+  return { robots, loading, error, refetch: fetchRobots };
 }

@@ -5,10 +5,10 @@ from enum import Enum
 from uuid import UUID
 
 class TaskStatus(str, Enum):
+    PENDING = "pending" 
     IDLE = "idle"
-    IN_OPERATION = "IN_OPERATION"
+    IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
-    FAILED = "failed"
 
 class RobotStatus(str, Enum):
     PENDING = "pending"
@@ -68,15 +68,15 @@ class RobotResponse(RobotBase):
 
 class TaskBase(BaseModel):
     name: str
-    status: TaskStatus
     location: str
-    area_dimensions: Dict[str, float] = Field(..., description="Dimensions of the area to be striped")
+    area_dimensions: Dict[str, float]
     quality_requirements: Dict[str, float] = Field(
         default_factory=lambda: {
             "line_straightness": 95.0,
             "paint_thickness": 90.0
         }
     )
+    status: TaskStatus = TaskStatus.PENDING
 
 class TaskCreate(TaskBase):
     pass

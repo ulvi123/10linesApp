@@ -1,54 +1,67 @@
 import React, { useState } from 'react'
-import { supabase } from '../lib/supabase'
-import { v4 as uuidv4 } from 'uuid'
+import axios from 'axios'
+
 interface AddTaskModalProps {
   isOpen: boolean
   onClose: () => void
   onTaskAdded: () => void
 }
 
-const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdded }) => {
+const AddTaskForm: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdded }) => {
   const [name, setName] = useState('')
   const [location, setLocation] = useState('')
   const [length, setLength] = useState('')
   const [width, setWidth] = useState('')
   const [error, setError] = useState<string | null>(null)
 
+  const validateInputs = () => {
+    if (!name.trim()) return 'Task name is required'
+    if (!location.trim()) return 'Location is required'
+    if (!length || !width) return 'Length and width are required'
+    if (isNaN(Number(length)) || isNaN(Number(width))) return 'Length and width must be valid numbers'
+    if (Number(length) <= 0 || Number(width) <= 0) return 'Length and width must be positive numbers'
+    return null
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
-
-    if (!name || !location || !length || !width) {
-      setError('All fields are required')
+    const validationError = validateInputs()
+    if (validationError) {
+      setError(validationError)
       return
     }
 
+    const payload = {
+      name: name.trim(),
+      location: location.trim(),
+      status: "pending",
+      area_dimensions: {
+        length: Number(length),
+        width: Number(width)
+      },
+      quality_requirements: {
+        line_straightness: 95.0,
+        paint_thickness: 90.0
+      }
+    }
+
+    console.log('Sending payload:', payload) // Debug log
+
     try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert({
-          id:uuidv4(),
-          name,
-          location,
-          area_dimensions: { length: parseFloat(length), width: parseFloat(width) },
-          status: 'pending',
-          quality_requirements:{}
-        })
-
-      if (error) throw error
-
+      const response = await axios.post('http://localhost:8000/tasks', payload)
+      console.log('Response:', response.data) 
       onTaskAdded()
       onClose()
     } catch (error) {
-      setError('Failed to add task. Please try again.')
-
-      const errorMessage =
-        error instanceof Error ? error.message :
-          typeof error === 'object' && error && 'message' in error ? (error as { message: string }).message :
-            'Unknown error occurred';
-
-      console.error('Error adding task:', errorMessage)
-
+      if (axios.isAxiosError(error)) {
+        console.error('Full error response:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          headers: error.response?.headers
+        })
+      }
+      console.error('Error details:', error)
     }
   }
 
@@ -66,6 +79,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdde
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full p-2 border rounded"
+              required
             />
           </div>
           <div className="mb-4">
@@ -75,6 +89,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdde
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               className="w-full p-2 border rounded"
+              required
             />
           </div>
           <div className="mb-4 flex gap-4">
@@ -85,6 +100,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdde
                 value={length}
                 onChange={(e) => setLength(e.target.value)}
                 className="w-full p-2 border rounded"
+                min="0"
+                step="0.01"
+                required
               />
             </div>
             <div className="flex-1">
@@ -94,6 +112,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdde
                 value={width}
                 onChange={(e) => setWidth(e.target.value)}
                 className="w-full p-2 border rounded"
+                min="0"
+                step="0.01"
+                required
               />
             </div>
           </div>
@@ -119,4 +140,4 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdde
   )
 }
 
-export default AddTaskModal
+export default AddTaskForm

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase";
+
+import axios from "axios";
 
 export interface Task {
   id: number;
@@ -7,7 +8,10 @@ export interface Task {
   status: "idle" | "in_progress" | "completed" | "pending" ;
   location: string;
   area_dimensions: { length: number; width: number };
-  quality_requirements: any;
+  quality_requirements: {
+    line_straightness: number;
+    paint_thickness: number;
+  };
 }
 
 export function useTasks() {
@@ -22,9 +26,8 @@ export function useTasks() {
   async function fetchTasks() {
     try {
       setLoading(true);
-      const { data, error } = await supabase.from("tasks").select("*");
-      if (error) throw error;
-      setTasks(data || []);
+      const response = await axios.get<Task[]>("http://localhost:8000/tasks");
+      setTasks(response.data)
     } catch (error) {
       if (error instanceof Error) {
         setError(error);
