@@ -52,18 +52,23 @@ source env/bin/activate  # On Windows: .\env\Scripts\activate
 
 Install dependencies:
 
-pip install fastapi sqlalchemy 
+pip install -r requirements.txt
 
 Configure environment variables:
 Create a .env file in the root directory and populate it with:
 
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
-DB_HOST=your_db_host
-DB_PORT=your_db_port
-DB_NAME=your_db_name
-PROJECT_NAME=Robot Parking App
-VERSION=1.0.0
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=ulvi123
+DB_NAME=RoboPark
+
+other environment varibales:
+SECRET_KEY="BEFOQBFIQWHPIWHF47R4_DDE65775QWQJKBRF47GTQEFFWFW_T578YT5UHUWVOUBWDSFNSNG"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+
 
 Apply database migrations:
 
